@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GomXu Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Roboto', sans-serif; }
+        .admin-bg { background: linear-gradient(135deg, #0f172a, #1e2937); }
+        .sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-hidden { transform: translateX(-100%); }
+    </style>
+</head>
+<body class="admin-bg text-white min-h-screen">
+
+    <!-- HAMBURGER -->
+    <button id="hamburger" class="fixed top-4 left-4 z-50 bg-gray-800 p-3 rounded-full shadow-lg lg:hidden">
+        <i class="fa-solid fa-bars text-2xl"></i>
+    </button>
+
+    <div class="flex min-h-screen">
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-72 bg-gray-950 border-r border-gray-700 z-40 lg:relative lg:translate-x-0 sidebar-hidden">
+            <div class="p-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-crown text-yellow-400 text-4xl"></i>
+                    <span class="text-3xl font-bold">GomXu Admin</span>
+                </div>
+                <button id="close-sidebar" class="lg:hidden text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <nav class="mt-8 px-4 space-y-2">
+                <a onclick="showSection(0)" class="menu-item flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-gray-800 cursor-pointer active">
+                    <i class="fa-solid fa-chart-line w-6"></i> Thống kê
+                </a>
+                <a onclick="showSection(1)" class="menu-item flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-gray-800 cursor-pointer">
+                    <i class="fa-solid fa-users w-6"></i> Người chơi
+                </a>
+                <a onclick="showSection(2)" class="menu-item flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-gray-800 cursor-pointer">
+                    <i class="fa-solid fa-money-bill-transfer w-6"></i> Đơn rút tiền
+                </a>
+                <a onclick="showSection(3)" class="menu-item flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-gray-800 cursor-pointer">
+                    <i class="fa-solid fa-gift w-6"></i> Tạo Giftcode
+                </a>
+                <a onclick="showSection(4)" class="menu-item flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-gray-800 cursor-pointer">
+                    <i class="fa-solid fa-gear w-6"></i> Cài đặt
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
+            <!-- THỐNG KÊ -->
+            <section id="section-0" class="section">
+                <h1 class="text-4xl font-bold mb-8">Thống kê tổng quan</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-gray-800 p-8 rounded-3xl">
+                        <p class="text-gray-400">Tổng người chơi</p>
+                        <p id="total-users" class="text-6xl font-bold text-yellow-400">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-3xl">
+                        <p class="text-gray-400">Tổng vàng hệ thống</p>
+                        <p id="total-gold" class="text-6xl font-bold text-emerald-400">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-3xl">
+                        <p class="text-gray-400">Tổng kim cương</p>
+                        <p id="total-diamond" class="text-6xl font-bold text-blue-400">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-3xl">
+                        <p class="text-gray-400">Giftcode còn hạn</p>
+                        <p id="total-giftcode" class="text-6xl font-bold text-purple-400">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NGƯỜI CHƠI -->
+            <section id="section-1" class="section hidden">
+                <h1 class="text-3xl font-bold mb-6">Quản lý người chơi</h1>
+                <table class="w-full bg-gray-800 rounded-3xl overflow-hidden">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="p-6 text-left">Username</th>
+                            <th class="p-6 text-left">Vàng</th>
+                            <th class="p-6 text-left">Kim cương</th>
+                            <th class="p-6 text-left">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="player-table"></tbody>
+                </table>
+            </section>
+
+            <!-- ĐƠN RÚT TIỀN (ĐÃ CÓ DUYỆT + HỦY) -->
+            <section id="section-2" class="section hidden">
+                <h1 class="text-3xl font-bold mb-6">Đơn rút tiền</h1>
+                <div id="withdraw-list" class="space-y-6"></div>
+            </section>
+
+            <!-- TẠO GIFTCODE -->
+            <section id="section-3" class="section hidden">
+                <h1 class="text-3xl font-bold mb-8">Tạo Giftcode</h1>
+                <div class="bg-gray-800 p-8 rounded-3xl max-w-lg">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm mb-2">Mã giftcode</label>
+                            <input id="new-code" placeholder="Ví dụ: KENVIP2026" class="w-full bg-gray-700 rounded-3xl px-6 py-4 text-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm mb-2">Vàng thưởng</label>
+                                <input id="code-gold" type="number" value="5000000" class="w-full bg-gray-700 rounded-3xl px-6 py-4 text-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Kim cương thưởng</label>
+                                <input id="code-diamond" type="number" value="100" class="w-full bg-gray-700 rounded-3xl px-6 py-4 text-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-2">Số lượt dùng tối đa</label>
+                            <input id="code-maxuses" type="number" value="5" class="w-full bg-gray-700 rounded-3xl px-6 py-4 text-lg">
+                        </div>
+                        <button onclick="createGiftcode()" class="w-full bg-emerald-500 py-6 rounded-3xl font-bold text-xl">TẠO GIFTCODE NGAY</button>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <p class="text-xl font-bold mb-6">Giftcode đã tạo</p>
+                    <div id="code-list" class="space-y-4"></div>
+                </div>
+            </section>
+
+            <!-- CÀI ĐẶT -->
+            <section id="section-4" class="section hidden">
+                <h1 class="text-3xl font-bold mb-8">Cài đặt Admin</h1>
+                <div class="bg-gray-800 p-8 rounded-3xl max-w-md">
+                    <p class="mb-4 font-bold">Đổi mật khẩu admin</p>
+                    <input id="new-pass" type="password" placeholder="Mật khẩu mới" class="w-full bg-gray-700 rounded-3xl px-6 py-4 mb-6">
+                    <button onclick="changePassword()" class="w-full bg-yellow-400 text-black py-6 rounded-3xl font-bold">LƯU MẬT KHẨU MỚI</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let adminPassword = "admin123";
+        let withdraws = JSON.parse(localStorage.getItem('withdrawHistory')) || [];
+        let giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
+
+        function loginAdmin() {
+            const user = document.getElementById('admin-user').value;
+            const pass = document.getElementById('admin-pass').value;
+            if (user === "admin" && pass === adminPassword) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadAllData();
+                showSection(0);
+            } else {
+                alert("Sai tài khoản hoặc mật khẩu!");
+            }
+        }
+
+        function showSection(n) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('section-'+n).classList.remove('hidden');
+        }
+
+        function loadAllData() {
+            loadPlayers();
+            loadWithdraws();
+            loadGiftcodes();
+            updateStats();
+        }
+
+        function updateStats() {
+            const users = JSON.parse(localStorage.getItem('gomxu_users')) || [];
+            let totalGold = 0, totalDiamond = 0;
+            users.forEach(u => { totalGold += u.gold || 0; totalDiamond += u.diamond || 0; });
+
+            document.getElementById('total-users').textContent = users.length;
+            document.getElementById('total-gold').textContent = totalGold.toLocaleString();
+            document.getElementById('total-diamond').textContent = totalDiamond;
+            document.getElementById('total-giftcode').textContent = giftcodes.length;
+        }
+
+        function loadPlayers() {
+            const tbody = document.getElementById('player-table');
+            tbody.innerHTML = '';
+            const users = JSON.parse(localStorage.getItem('gomxu_users')) || [];
+            users.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-t border-slate-700';
+                tr.innerHTML = `
+                    <td class="p-6">${p.username}</td>
+                    <td class="p-6">${p.gold.toLocaleString()}</td>
+                    <td class="p-6">${p.diamond}</td>
+                    <td class="p-6"><span class="text-green-400">Hoạt động</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadWithdraws() {
+            const container = document.getElementById('withdraw-list');
+            container.innerHTML = '';
+            withdraws.forEach((w, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 p-6 rounded-3xl flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <p><strong>${w.username || 'Người chơi'}</strong> - ${w.bank}</p>
+                        <p class="text-yellow-400">${w.gold} vàng = ${w.vnd} VND</p>
+                        <p class="text-xs text-gray-400">Trạng thái: ${w.status}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="approveWithdraw(${index})" class="bg-emerald-500 px-6 py-3 rounded-3xl text-sm">Duyệt</button>
+                        <button onclick="cancelWithdraw(${index})" class="bg-red-500 px-6 py-3 rounded-3xl text-sm">Hủy</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function approveWithdraw(index) {
+            withdraws[index].status = "Đã duyệt";
+            localStorage.setItem('withdrawHistory', JSON.stringify(withdraws));
+            loadWithdraws();
+            showToast("Đơn rút đã được duyệt!", "success");
+        }
+
+        function cancelWithdraw(index) {
+            if (confirm("Xác nhận hủy đơn rút này?")) {
+                withdraws[index].status = "Đã hủy";
+                localStorage.setItem('withdrawHistory', JSON.stringify(withdraws));
+                loadWithdraws();
+                showToast("Đơn rút đã bị hủy!", "error");
+            }
+        }
+
+        function loadGiftcodes() {
+            const list = document.getElementById('code-list');
+            list.innerHTML = '';
+            giftcodes.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-700 p-6 rounded-3xl flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <span class="font-mono text-xl">${c.code}</span><br>
+                        <span class="text-emerald-400">${c.gold.toLocaleString()} vàng + ${c.diamond} kim</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs bg-slate-600 px-4 py-1 rounded-3xl">Còn ${c.maxUses - (c.usedCount || 0)}/${c.maxUses} lượt</span>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function createGiftcode() {
+            const code = document.getElementById('new-code').value.trim().toUpperCase() || "GIFT" + Date.now();
+            const gold = parseInt(document.getElementById('code-gold').value) || 0;
+            const diamond = parseInt(document.getElementById('code-diamond').value) || 0;
+            const maxUses = parseInt(document.getElementById('code-maxuses').value) || 1;
+
+            giftcodes.push({ code, gold, diamond, maxUses, usedCount: 0 });
+            localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
+            loadGiftcodes();
+            updateStats();
+            showToast(`Giftcode ${code} đã tạo thành công!`, 'success');
+            document.getElementById('new-code').value = '';
+        }
+
+        function changePassword() {
+            const newP = document.getElementById('new-pass').value;
+            if (newP) {
+                adminPassword = newP;
+                showToast('Mật khẩu admin đã đổi thành công!', 'success');
+            }
+        }
+
+        function showToast(msg, type) {
+            alert(msg); // Demo đơn giản, anh có thể thay bằng toast đẹp nếu muốn
+        }
+
+        // Hamburger menu
+        document.getElementById('hamburger').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('sidebar-hidden');
+        });
+
+        window.onload = () => {
+            loadAllData();
+            showSection(0);
+        };
+    </script>
+</body>
+</html>
