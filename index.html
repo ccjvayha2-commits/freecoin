@@ -98,6 +98,10 @@
             cursor: pointer;
         }
         #close-modal:hover { color: #f87171; }
+        /* Trạng thái rút đẹp hơn */
+        .status-wait { background: #fbbf24; color: black; }
+        .status-approved { background: #10b981; color: white; }
+        .status-cancelled { background: #ef4444; color: white; }
     </style>
 </head>
 <body class="bg-gray-900 flex items-center justify-center min-h-screen">
@@ -105,7 +109,7 @@
     <!-- TOAST -->
     <div id="toast" class="hidden"></div>
 
-    <!-- THÔNG BÁO LỚN SAU ĐĂNG NHẬP/ĐĂNG KÝ -->
+    <!-- THÔNG BÁO LỚN (CHỈ HIỆN 1 LẦN) -->
     <div id="welcome-modal">
         <div id="modal-content" class="text-center relative">
             <i id="close-modal" class="fa-solid fa-circle-xmark"></i>
@@ -213,7 +217,7 @@
         <div id="main-content" class="h-[520px] overflow-y-auto bg-gradient-to-b from-yellow-300 via-emerald-400 to-emerald-600 p-4 text-white">
             
             <!-- TAB 1: KHAI THÁC -->
-            <div id="tab-khai-thac" class="tab-content active">
+            <div id="tab-khai-thac" class="tab-content">
                 <div class="text-center">
                     <div class="flex justify-center mb-6">
                         <svg width="240" height="240" viewBox="0 0 240 240" class="miner-svg">
@@ -450,7 +454,8 @@
                             </div>
                             <div>
                                 <label class="text-xs block mb-1">Số vàng rút</label>
-                                <input id="withdraw-gold" type="number" value="0" class="w-full bg-white text-black rounded-2xl px-6 py-4 text-2xl">
+                                <input id="withdraw-gold" type="number" value="0" 
+                                       class="w-full bg-white text-black rounded-2xl px-6 py-4 text-2xl">
                             </div>
                             <div class="bg-white/10 p-4 rounded-2xl">
                                 <p class="text-xs">Số tiền nhận được</p>
@@ -482,7 +487,7 @@
         <!-- Bottom Navigation -->
         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-yellow-400 to-emerald-600 border-t border-white/30 py-2">
             <div class="flex justify-around text-white text-[10px]">
-                <div onclick="switchTab(0)" class="flex flex-col items-center cursor-pointer tab-nav active">
+                <div onclick="switchTab(0)" class="flex flex-col items-center cursor-pointer tab-nav">
                     <i class="fa-solid fa-cart-shopping text-2xl"></i>
                     <span class="mt-1">Khai Thác</span>
                 </div>
@@ -577,7 +582,7 @@
             users.push(newUser);
             localStorage.setItem('gomxu_users', JSON.stringify(users));
             showToast(`Đăng ký thành công! Chào mừng ${fullname}`, 'success');
-            loginAfterRegister(newUser, true); // true = vừa đăng ký
+            loginAfterRegister(newUser, true);
         }
 
         // ==================== ĐĂNG NHẬP ====================
@@ -614,9 +619,9 @@
             }
         }
 
-        function loginAfterRegister(user, isNewRegister = false) {
+        function loginAfterRegister(user, isNew = false) {
             currentUser = user;
-            localStorage.setItem('current_gomxu_user', currentUser.username); // Lưu để tự động đăng nhập mãi mãi
+            localStorage.setItem('current_gomxu_user', currentUser.username);
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-frame').classList.remove('hidden');
             document.getElementById('current-username').textContent = currentUser.username;
@@ -626,16 +631,17 @@
             }
             
             loadUserData();
+            restoreMining(); // Khôi phục trạng thái đào khi tải lại
+            restoreTab(); // Khôi phục tab đang mở
             initGame();
 
-            // Hiển thị thông báo lớn nếu vừa đăng ký hoặc đăng nhập lần đầu
-            if (isNewRegister || !localStorage.getItem('welcomeShown')) {
+            if (isNew || !localStorage.getItem('welcomeShown')) {
                 document.getElementById('welcome-modal').style.display = 'flex';
-                localStorage.setItem('welcomeShown', 'true'); // Chỉ hiện 1 lần
+                localStorage.setItem('welcomeShown', 'true');
             }
         }
 
-        // Đóng modal thông báo
+        // Đóng modal
         document.getElementById('close-modal').addEventListener('click', () => {
             document.getElementById('welcome-modal').style.display = 'none';
         });
@@ -647,6 +653,8 @@
             if (confirm("Đăng xuất?")) {
                 localStorage.removeItem('current_gomxu_user');
                 localStorage.removeItem('welcomeShown');
+                localStorage.removeItem('activeTab');
+                localStorage.removeItem('miningState');
                 document.getElementById('app-frame').classList.add('hidden');
                 document.getElementById('auth-screen').style.display = 'flex';
                 showAuthForm('login');
@@ -654,6 +662,69 @@
             }
         }
 
+        // ==================== LƯU & KHÔI PHỤC TRẠNG THÁI ĐÀO ====================
+        function saveMiningState() {
+            if (isMining) {
+                localStorage.setItem('miningState', JSON.stringify({
+                    isMining: true,
+                    startTime: Date.now(),
+                    remaining: MINING_DURATION - (Date.now() - (localStorage.getItem('miningStart') || Date.now()))
+                }));
+            } else {
+                localStorage.removeItem('miningState');
+            }
+        }
+
+        function restoreMining() {
+            const state = JSON.parse(localStorage.getItem('miningState'));
+            if (state && state.isMining) {
+                isMining = true;
+                document.getElementById('mining-text').textContent = 'ĐANG ĐÀO...';
+                document.getElementById('mining-button').classList.add('bg-red-500');
+
+                const elapsed = Date.now() - state.startTime;
+                const remaining = state.remaining - elapsed;
+
+                if (remaining > 0) {
+                    miningInterval = setInterval(() => {
+                        currentUser.gold += currentUser.miningRate;
+                        updateBalances();
+                    }, 1000);
+
+                    miningTimeout = setTimeout(() => {
+                        toggleMining();
+                        showToast('Hết thời gian khai thác 12 giờ!', 'error');
+                    }, remaining);
+                } else {
+                    toggleMining();
+                }
+            }
+        }
+
+        // Gọi saveMiningState mỗi khi thay đổi trạng thái đào
+        const originalToggleMining = toggleMining;
+        toggleMining = function() {
+            originalToggleMining.apply(this, arguments);
+            saveMiningState();
+        };
+
+        // ==================== LƯU & KHÔI PHỤC TAB ====================
+        function saveActiveTab(tab) {
+            localStorage.setItem('activeTab', tab);
+        }
+
+        function restoreTab() {
+            const savedTab = parseInt(localStorage.getItem('activeTab')) || 0;
+            switchTab(savedTab);
+        }
+
+        const originalSwitchTab = switchTab;
+        switchTab = function(tab) {
+            originalSwitchTab(tab);
+            saveActiveTab(tab);
+        };
+
+        // ==================== CÁC HÀM KHÁC GIỮ NGUYÊN ====================
         function loadUserData() {
             document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
             document.getElementById('diamond-balance').textContent = currentUser.diamond;
@@ -676,7 +747,6 @@
             loadWithdrawHistory();
         }
 
-        // ==================== LIÊN KẾT NGÂN HÀNG ====================
         function linkBank() {
             const bank = document.getElementById('link-bank').value;
             const account = document.getElementById('link-account').value.trim();
@@ -690,7 +760,6 @@
             showToast("Liên kết ngân hàng thành công!", 'success');
         }
 
-        // ==================== THAM GIA TELEGRAM ====================
         function joinTelegramChannel() {
             window.open('https://t.me/KenhThongBaoBotFree', '_blank');
             if (!currentUser.telegramJoined) {
@@ -717,7 +786,6 @@
             }
         }
 
-        // ==================== XEM QUẢNG CÁO ====================
         function claimAdReward(amount, type) {
             if (!currentUser) return;
 
@@ -740,7 +808,6 @@
             showToast(`Nhận ${amount} ${type}! (Còn ${2 - currentUser.adViewsToday} lần hôm nay)`, 'success');
         }
 
-        // ==================== CÁC HÀM KHÁC GIỮ NGUYÊN ====================
         function updateBalances() {
             if (!currentUser) return;
             document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
@@ -763,6 +830,7 @@
                 document.getElementById('mining-text').textContent = 'BẮT ĐẦU KHAI THÁC';
                 document.getElementById('mining-button').classList.remove('bg-red-500');
                 showToast('Đã dừng khai thác!', 'success');
+                localStorage.removeItem('miningState');
             } else {
                 isMining = true;
                 document.getElementById('mining-text').textContent = 'ĐANG ĐÀO...';
@@ -778,6 +846,7 @@
                     if (isMining) toggleMining();
                     showToast('Hết thời gian khai thác 12 giờ!', 'error');
                 }, MINING_DURATION);
+                localStorage.setItem('miningState', JSON.stringify({ isMining: true }));
             }
         }
 
@@ -840,13 +909,17 @@
             currentUser.gold -= goldAmount;
             updateBalances();
 
+            const ipDemo = '192.168.' + Math.floor(Math.random()*255) + '.' + Math.floor(Math.random()*255); // IP giả lập
+
             withdrawHistory.unshift({
                 time: new Date().toLocaleString('vi-VN'),
                 bank: currentUser.bankInfo.bank,
                 account: currentUser.bankInfo.account,
                 gold: goldAmount,
                 vnd: (goldAmount * 0.0005).toLocaleString('vi-VN'),
-                status: 'Đang chờ'
+                status: 'Chờ duyệt',
+                username: currentUser.username,
+                ip: ipDemo // Thêm IP demo để admin check
             });
 
             saveData();
@@ -862,6 +935,8 @@
             const container = document.getElementById('withdraw-history');
             container.innerHTML = '';
             withdrawHistory.forEach(item => {
+                const statusClass = item.status === 'Đã duyệt' ? 'status-approved' : 
+                                  item.status === 'Đã hủy' ? 'status-cancelled' : 'status-wait';
                 const div = document.createElement('div');
                 div.className = 'bg-white/10 p-4 rounded-2xl flex justify-between items-center';
                 div.innerHTML = `
@@ -871,7 +946,7 @@
                         <div class="text-yellow-300">${item.gold.toLocaleString()} vàng = ${item.vnd} VND</div>
                     </div>
                     <div class="text-right">
-                        <span class="px-4 py-1 bg-yellow-400 text-black text-xs rounded-3xl">${item.status}</span>
+                        <span class="px-4 py-1 rounded-3xl text-xs ${statusClass}">${item.status}</span>
                     </div>
                 `;
                 container.appendChild(div);
@@ -921,7 +996,6 @@
             if (savedUser) {
                 currentUser = users.find(u => u.username === savedUser);
                 if (currentUser) {
-                    // Tự động vào game nếu có tài khoản đã lưu (không hết hạn)
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('app-frame').classList.remove('hidden');
                     document.getElementById('current-username').textContent = currentUser.username;
@@ -931,9 +1005,10 @@
                     }
                     
                     loadUserData();
+                    restoreMining();
+                    restoreTab();
                     initGame();
 
-                    // Hiển thị thông báo nếu chưa từng hiện
                     if (!localStorage.getItem('welcomeShown')) {
                         document.getElementById('welcome-modal').style.display = 'flex';
                         localStorage.setItem('welcomeShown', 'true');
