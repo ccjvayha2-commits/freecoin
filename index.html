@@ -69,12 +69,54 @@
         /* FORM AUTH */
         .auth-form { display: none; }
         .auth-form.active { display: block; }
+        /* THÔNG BÁO LỚN */
+        #welcome-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-content {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 90%;
+            width: 420px;
+            border: 4px solid #fbbf24;
+            box-shadow: 0 0 40px rgba(251,191,36,0.5);
+            position: relative;
+        }
+        #close-modal {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 28px;
+            color: #ef4444;
+            cursor: pointer;
+        }
+        #close-modal:hover { color: #f87171; }
     </style>
 </head>
 <body class="bg-gray-900 flex items-center justify-center min-h-screen">
 
     <!-- TOAST -->
     <div id="toast" class="hidden"></div>
+
+    <!-- THÔNG BÁO LỚN SAU ĐĂNG NHẬP/ĐĂNG KÝ -->
+    <div id="welcome-modal">
+        <div id="modal-content" class="text-center relative">
+            <i id="close-modal" class="fa-solid fa-circle-xmark"></i>
+            <i class="fa-solid fa-triangle-exclamation text-6xl text-yellow-400 mb-6"></i>
+            <h2 class="text-3xl font-bold text-yellow-300 mb-4">CẢNH BÁO QUAN TRỌNG!</h2>
+            <p class="text-lg mb-4">Mỗi thiết bị chỉ được dùng <strong>1 tài khoản</strong> duy nhất.</p>
+            <p class="text-lg mb-6 text-red-300 font-bold">Tạo nhiều tài khoản hoặc gian lận sẽ bị khóa vĩnh viễn và từ chối tất cả đơn rút tiền!</p>
+            <p class="text-base text-gray-300">Đơn rút tiền sẽ được duyệt trong vòng 24–48 giờ. Vui lòng kiên nhẫn chờ thông báo.</p>
+            <button id="close-modal-btn" class="mt-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-12 rounded-3xl text-xl">ĐÃ HIỂU</button>
+        </div>
+    </div>
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="flex items-center justify-center min-h-screen w-full">
@@ -363,7 +405,6 @@
                         <i class="fa-solid fa-money-bill-wave"></i> Rút Tiền
                     </h2>
 
-                    <!-- PHẦN LIÊN KẾT NGÂN HÀNG -->
                     <div id="bank-link-section" class="mb-8" style="display: none;">
                         <p class="text-lg font-bold mb-4 text-center">Liên kết ngân hàng để rút tiền nhanh</p>
                         <div class="space-y-4">
@@ -388,7 +429,6 @@
                         </div>
                     </div>
 
-                    <!-- Form rút tiền -->
                     <div class="mb-8">
                         <div class="flex gap-3 mb-4">
                             <button onclick="selectWithdrawType(0)" id="btn-bank" class="flex-1 py-4 bg-yellow-400 text-black rounded-3xl font-bold active">Ngân Hàng</button>
@@ -429,7 +469,6 @@
                         Gian lận, dùng nhiều tài khoản sẽ bị từ chối thanh toán.
                     </div>
 
-                    <!-- LỊCH SỬ RÚT TIỀN -->
                     <div class="mt-8">
                         <p class="font-bold text-lg mb-4 flex items-center gap-2">
                             <i class="fa-solid fa-clock"></i> Lịch sử rút tiền
@@ -531,22 +570,21 @@
                 invitedGold: 0,
                 invitedDiamond: 0,
                 bankInfo: null,
-                telegramJoined: false, // Chưa tham gia Telegram
-                adViewsToday: 0, // Số lần xem quảng cáo hôm nay
-                lastAdView: null // Thời gian xem quảng cáo cuối
+                telegramJoined: false,
+                adViewsToday: 0,
+                lastAdView: null
             };
             users.push(newUser);
             localStorage.setItem('gomxu_users', JSON.stringify(users));
             showToast(`Đăng ký thành công! Chào mừng ${fullname}`, 'success');
-            loginAfterRegister(newUser);
+            loginAfterRegister(newUser, true); // true = vừa đăng ký
         }
 
-        // ==================== ĐĂNG NHẬP (THÊM CHECK ADMIN CỐ ĐỊNH) ====================
+        // ==================== ĐĂNG NHẬP ====================
         function loginGame() {
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value.trim();
 
-            // Check tài khoản admin cố định trước
             if (username.toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                 currentUser = {
                     username: ADMIN_USERNAME,
@@ -562,23 +600,23 @@
                     telegramJoined: false,
                     adViewsToday: 0,
                     lastAdView: null,
-                    isAdmin: true // Đánh dấu admin
+                    isAdmin: true
                 };
-                loginAfterRegister(currentUser);
+                loginAfterRegister(currentUser, false);
                 return;
             }
 
-            // Check user bình thường
             const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
             if (user) {
-                loginAfterRegister(user);
+                loginAfterRegister(user, false);
             } else {
                 showToast("Sai tài khoản hoặc mật khẩu!", 'error');
             }
         }
 
-        function loginAfterRegister(user) {
+        function loginAfterRegister(user, isNewRegister = false) {
             currentUser = user;
+            localStorage.setItem('current_gomxu_user', currentUser.username); // Lưu để tự động đăng nhập mãi mãi
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-frame').classList.remove('hidden');
             document.getElementById('current-username').textContent = currentUser.username;
@@ -589,10 +627,26 @@
             
             loadUserData();
             initGame();
+
+            // Hiển thị thông báo lớn nếu vừa đăng ký hoặc đăng nhập lần đầu
+            if (isNewRegister || !localStorage.getItem('welcomeShown')) {
+                document.getElementById('welcome-modal').style.display = 'flex';
+                localStorage.setItem('welcomeShown', 'true'); // Chỉ hiện 1 lần
+            }
         }
+
+        // Đóng modal thông báo
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('welcome-modal').style.display = 'none';
+        });
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('welcome-modal').style.display = 'none';
+        });
 
         function logoutGame() {
             if (confirm("Đăng xuất?")) {
+                localStorage.removeItem('current_gomxu_user');
+                localStorage.removeItem('welcomeShown');
                 document.getElementById('app-frame').classList.add('hidden');
                 document.getElementById('auth-screen').style.display = 'flex';
                 showAuthForm('login');
@@ -636,7 +690,7 @@
             showToast("Liên kết ngân hàng thành công!", 'success');
         }
 
-        // ==================== THAM GIA TELEGRAM (CHỈ NHẬN 1 LẦN) ====================
+        // ==================== THAM GIA TELEGRAM ====================
         function joinTelegramChannel() {
             window.open('https://t.me/KenhThongBaoBotFree', '_blank');
             if (!currentUser.telegramJoined) {
@@ -663,7 +717,7 @@
             }
         }
 
-        // ==================== XEM QUẢNG CÁO (GIỚI HẠN 2 LẦN/NGÀY) ====================
+        // ==================== XEM QUẢNG CÁO ====================
         function claimAdReward(amount, type) {
             if (!currentUser) return;
 
@@ -693,6 +747,11 @@
             document.getElementById('diamond-balance').textContent = currentUser.diamond;
             saveData();
         }
+
+        let isMining = false;
+        let miningInterval = null;
+        let miningTimeout = null;
+        const MINING_DURATION = 12 * 60 * 60 * 1000;
 
         function toggleMining() {
             if (!currentUser) return;
@@ -862,15 +921,30 @@
             if (savedUser) {
                 currentUser = users.find(u => u.username === savedUser);
                 if (currentUser) {
+                    // Tự động vào game nếu có tài khoản đã lưu (không hết hạn)
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('app-frame').classList.remove('hidden');
                     document.getElementById('current-username').textContent = currentUser.username;
+                    
                     if (currentUser.username.toLowerCase() === ADMIN_USERNAME || currentUser.isAdmin) {
                         document.getElementById('admin-btn').style.display = "flex";
                     }
+                    
                     loadUserData();
                     initGame();
+
+                    // Hiển thị thông báo nếu chưa từng hiện
+                    if (!localStorage.getItem('welcomeShown')) {
+                        document.getElementById('welcome-modal').style.display = 'flex';
+                        localStorage.setItem('welcomeShown', 'true');
+                    }
+                } else {
+                    document.getElementById('auth-screen').style.display = 'flex';
+                    showAuthForm('login');
                 }
+            } else {
+                document.getElementById('auth-screen').style.display = 'flex';
+                showAuthForm('login');
             }
         };
     </script>
