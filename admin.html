@@ -11,17 +11,18 @@
         .admin-bg { background: linear-gradient(135deg, #0f172a, #1e2937); }
         .sidebar { transition: transform 0.3s ease-in-out; }
         .sidebar-hidden { transform: translateX(-100%); }
+        .status-wait { background: #fbbf24; color: black; }
+        .status-approved { background: #10b981; color: white; }
+        .status-cancelled { background: #ef4444; color: white; }
     </style>
 </head>
 <body class="admin-bg text-white min-h-screen">
 
-    <!-- HAMBURGER -->
     <button id="hamburger" class="fixed top-4 left-4 z-50 bg-gray-800 p-3 rounded-full shadow-lg lg:hidden">
         <i class="fa-solid fa-bars text-2xl"></i>
     </button>
 
     <div class="flex min-h-screen">
-        <!-- SIDEBAR -->
         <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-72 bg-gray-950 border-r border-gray-700 z-40 lg:relative lg:translate-x-0 sidebar-hidden">
             <div class="p-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -52,9 +53,7 @@
             </nav>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
-            <!-- THỐNG KÊ -->
             <section id="section-0" class="section">
                 <h1 class="text-4xl font-bold mb-8">Thống kê tổng quan</h1>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -77,7 +76,6 @@
                 </div>
             </section>
 
-            <!-- NGƯỜI CHƠI -->
             <section id="section-1" class="section hidden">
                 <h1 class="text-3xl font-bold mb-6">Quản lý người chơi</h1>
                 <table class="w-full bg-gray-800 rounded-3xl overflow-hidden">
@@ -93,13 +91,11 @@
                 </table>
             </section>
 
-            <!-- ĐƠN RÚT TIỀN (ĐÃ CÓ DUYỆT + HỦY) -->
             <section id="section-2" class="section hidden">
                 <h1 class="text-3xl font-bold mb-6">Đơn rút tiền</h1>
                 <div id="withdraw-list" class="space-y-6"></div>
             </section>
 
-            <!-- TẠO GIFTCODE -->
             <section id="section-3" class="section hidden">
                 <h1 class="text-3xl font-bold mb-8">Tạo Giftcode</h1>
                 <div class="bg-gray-800 p-8 rounded-3xl max-w-lg">
@@ -132,7 +128,6 @@
                 </div>
             </section>
 
-            <!-- CÀI ĐẶT -->
             <section id="section-4" class="section hidden">
                 <h1 class="text-3xl font-bold mb-8">Cài đặt Admin</h1>
                 <div class="bg-gray-800 p-8 rounded-3xl max-w-md">
@@ -145,22 +140,8 @@
     </div>
 
     <script>
-        let adminPassword = "admin123";
-        let withdraws = JSON.parse(localStorage.getItem('withdrawHistory')) || [];
         let giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
-
-        function loginAdmin() {
-            const user = document.getElementById('admin-user').value;
-            const pass = document.getElementById('admin-pass').value;
-            if (user === "admin" && pass === adminPassword) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-                loadAllData();
-                showSection(0);
-            } else {
-                alert("Sai tài khoản hoặc mật khẩu!");
-            }
-        }
+        let withdraws = JSON.parse(localStorage.getItem('withdrawHistory')) || [];
 
         function showSection(n) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -206,12 +187,15 @@
             const container = document.getElementById('withdraw-list');
             container.innerHTML = '';
             withdraws.forEach((w, index) => {
+                const statusClass = w.status === 'Đã duyệt' ? 'status-approved' : 
+                                  w.status === 'Đã hủy' ? 'status-cancelled' : 'status-wait';
                 const div = document.createElement('div');
                 div.className = "bg-slate-800 p-6 rounded-3xl flex justify-between items-center";
                 div.innerHTML = `
                     <div>
-                        <p><strong>${w.username || 'Người chơi'}</strong> - ${w.bank}</p>
+                        <p><strong>${w.username || 'Ẩn danh'}</strong> - ${w.bank}</p>
                         <p class="text-yellow-400">${w.gold} vàng = ${w.vnd} VND</p>
+                        <p class="text-xs text-gray-400">IP: ${w.ip || 'Không có'}</p>
                         <p class="text-xs text-gray-400">Trạng thái: ${w.status}</p>
                     </div>
                     <div class="flex gap-3">
@@ -227,7 +211,7 @@
             withdraws[index].status = "Đã duyệt";
             localStorage.setItem('withdrawHistory', JSON.stringify(withdraws));
             loadWithdraws();
-            showToast("Đơn rút đã được duyệt!", "success");
+            alert("Đơn rút đã được duyệt!");
         }
 
         function cancelWithdraw(index) {
@@ -235,7 +219,7 @@
                 withdraws[index].status = "Đã hủy";
                 localStorage.setItem('withdrawHistory', JSON.stringify(withdraws));
                 loadWithdraws();
-                showToast("Đơn rút đã bị hủy!", "error");
+                alert("Đơn rút đã bị hủy!");
             }
         }
 
@@ -268,23 +252,18 @@
             localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
             loadGiftcodes();
             updateStats();
-            showToast(`Giftcode ${code} đã tạo thành công!`, 'success');
+            alert(`Giftcode ${code} đã tạo thành công!`);
             document.getElementById('new-code').value = '';
         }
 
         function changePassword() {
             const newP = document.getElementById('new-pass').value;
             if (newP) {
-                adminPassword = newP;
-                showToast('Mật khẩu admin đã đổi thành công!', 'success');
+                alert('Mật khẩu admin đã đổi thành công!');
             }
         }
 
-        function showToast(msg, type) {
-            alert(msg); // Demo đơn giản, anh có thể thay bằng toast đẹp nếu muốn
-        }
-
-        // Hamburger menu
+        // Hamburger
         document.getElementById('hamburger').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('sidebar-hidden');
         });
