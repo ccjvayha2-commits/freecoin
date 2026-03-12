@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gom Xu Đào Vàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', sans-serif; }
+        .app-frame {
+            max-width: 420px;
+            margin: 20px auto;
+            background: linear-gradient(180deg, #facc15 0%, #10b981 100%);
+            border-radius: 30px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            height: 720px;
+            position: relative;
+        }
+        .status-bar {
+            background: #111827;
+            color: white;
+            font-size: 12px;
+            padding: 2px 20px;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .mining-btn {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .miner-svg {
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.4));
+        }
+        .gold-text {
+            text-shadow: 0 0 10px #fbbf24;
+        }
+        #admin-btn {
+            display: none;
+        }
+        /* TOAST */
+        #toast {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            padding: 16px 32px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.4s;
+            max-width: 90%;
+            text-align: center;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        /* FORM AUTH */
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden"></div>
+
+    <!-- AUTH SCREEN (ĐĂNG NHẬP & ĐĂNG KÝ RIÊNG) -->
+    <div id="auth-screen" class="flex items-center justify-center min-h-screen w-full">
+        <div class="bg-slate-800 p-8 rounded-3xl w-96 shadow-2xl border border-yellow-400">
+            <div class="text-center mb-8">
+                <i class="fa-solid fa-coins text-6xl text-yellow-400 mb-3"></i>
+                <h1 class="text-4xl font-bold text-yellow-400">Gom Xu Đào Vàng</h1>
+                <p class="text-slate-400 mt-2">Đăng nhập hoặc đăng ký tài khoản</p>
+            </div>
+
+            <!-- Tabs chuyển form -->
+            <div class="flex mb-6">
+                <button onclick="showAuthForm('login')" id="btn-login" class="flex-1 py-3 bg-yellow-400 text-black font-bold rounded-l-3xl active">Đăng Nhập</button>
+                <button onclick="showAuthForm('register')" id="btn-register" class="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-r-3xl">Đăng Ký</button>
+            </div>
+
+            <!-- FORM ĐĂNG NHẬP -->
+            <div id="form-login" class="auth-form active space-y-6">
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Tên tài khoản</label>
+                    <input id="login-username" placeholder="Ví dụ: anhkeodz" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Mật khẩu</label>
+                    <input id="login-password" type="password" placeholder="••••••••" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <button onclick="loginGame()" class="w-full bg-yellow-400 text-black font-bold py-5 rounded-3xl text-xl">ĐĂNG NHẬP</button>
+            </div>
+
+            <!-- FORM ĐĂNG KÝ (THÊM THÔNG TIN) -->
+            <div id="form-register" class="auth-form hidden space-y-6">
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Tên đăng nhập</label>
+                    <input id="reg-username" placeholder="Ví dụ: anhkeodz" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Mật khẩu</label>
+                    <input id="reg-password" type="password" placeholder="••••••••" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Gmail</label>
+                    <input id="reg-email" type="email" placeholder="example@gmail.com" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Số điện thoại</label>
+                    <input id="reg-phone" type="tel" placeholder="090xxxxxxx" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-2">Họ tên thật</label>
+                    <input id="reg-fullname" placeholder="Nguyễn Văn A" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                </div>
+                <button onclick="registerGame()" class="w-full bg-emerald-500 text-white font-bold py-5 rounded-3xl text-xl">ĐĂNG KÝ TÀI KHOẢN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP FRAME -->
+    <div id="app-frame" class="app-frame border-8 border-black relative hidden">
+        <!-- Status Bar -->
+        <div class="status-bar flex justify-between text-xs">
+            <div id="time">13:41</div>
+            <div class="flex items-center gap-2">
+                <span>4G</span>
+                <span id="battery">34%</span>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-yellow-400 to-emerald-500 px-4 py-3 flex items-center justify-between shadow-md">
+            <div class="flex items-center gap-3">
+                <div onclick="logoutGame()" class="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-user text-orange-500 text-2xl"></i>
+                </div>
+                <div>
+                    <p id="current-username" class="font-bold text-white text-lg">anhkeodz</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-white">
+                <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-gem text-blue-300 text-xl"></i>
+                    <span id="diamond-balance" class="font-bold">15598</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-coins text-yellow-300 text-xl"></i>
+                    <span id="gold-balance" class="font-bold gold-text">20000000000</span>
+                </div>
+                <button id="admin-btn" onclick="openAdminPanel()" 
+                        class="bg-red-600 hover:bg-red-500 px-5 py-2 rounded-3xl text-sm font-bold flex items-center gap-2 hidden">
+                    <i class="fa-solid fa-crown"></i> ADMIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="h-[520px] overflow-y-auto bg-gradient-to-b from-yellow-300 via-emerald-400 to-emerald-600 p-4 text-white">
+            
+            <!-- TAB 1: KHAI THÁC -->
+            <div id="tab-khai-thac" class="tab-content active">
+                <div class="text-center">
+                    <div class="flex justify-center mb-6">
+                        <svg width="240" height="240" viewBox="0 0 240 240" class="miner-svg">
+                            <ellipse cx="120" cy="175" rx="48" ry="22" fill="#1e40af"/>
+                            <rect x="75" y="85" width="90" height="95" rx="12" fill="#3b82f6"/>
+                            <circle cx="120" cy="75" r="38" fill="#f59e0b"/>
+                            <path d="M85 55 Q120 32 155 55" fill="#eab308"/>
+                            <circle cx="120" cy="75" r="22" fill="#fed7aa"/>
+                            <circle cx="105" cy="70" r="5" fill="#111827"/>
+                            <circle cx="135" cy="70" r="5" fill="#111827"/>
+                            <line x1="175" y1="130" x2="215" y2="95" stroke="#64748b" stroke-width="14" stroke-linecap="round"/>
+                            <polygon points="210,88 230,78 215,68" fill="#64748b"/>
+                            <rect x="155" y="98" width="48" height="60" rx="12" fill="#1e2937"/>
+                            <circle cx="170" cy="115" r="9" fill="#fbbf24"/>
+                            <circle cx="185" cy="128" r="8" fill="#fbbf24"/>
+                            <rect x="95" y="170" width="18" height="35" rx="8" fill="#1e40af"/>
+                            <rect x="125" y="170" width="18" height="35" rx="8" fill="#1e40af"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="bg-white/20 backdrop-blur-md rounded-3xl p-6 mb-6">
+                        <div class="flex items-center justify-center gap-3">
+                            <span class="text-4xl">👷</span>
+                            <div>
+                                <p class="text-yellow-300 text-sm">Cấp độ thợ đào</p>
+                                <p id="level" class="text-5xl font-bold text-white">Lv. 35</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 bg-white/10 rounded-2xl p-4">
+                            <div class="flex justify-between items-center text-sm mb-2">
+                                <span>Chi phí nâng cấp tiếp theo</span>
+                                <span class="flex items-center gap-2">
+                                    <span id="upgrade-cost" class="font-bold">35000</span>
+                                    <i class="fa-solid fa-gem text-blue-300"></i>
+                                </span>
+                            </div>
+                            <div onclick="upgradeLevel()" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-3xl text-center cursor-pointer transition">NÂNG CẤP</div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-center items-center gap-2 text-xl">
+                            <i class="fa-solid fa-bolt text-yellow-300"></i>
+                            <span>Tốc độ đào: <span id="mining-rate" class="font-bold">86.00</span> vàng/giây</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="toggleMining()" id="mining-button"
+                                class="mining-btn flex-1 bg-emerald-500 hover:bg-emerald-600 py-5 rounded-3xl font-bold text-xl flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-pickaxe"></i>
+                            <span id="mining-text">BẮT ĐẦU KHAI THÁC</span>
+                        </button>
+                        
+                        <button onclick="showFAQ()" 
+                                class="flex-1 bg-white/20 py-5 rounded-3xl font-bold text-xl flex items-center justify-center">
+                            <i class="fa-solid fa-question-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: QUY ĐỔI -->
+            <div id="tab-quy-doi" class="tab-content">
+                <div class="bg-white/10 rounded-3xl p-6 mb-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fa-solid fa-gem text-4xl"></i>
+                        <div>
+                            <h2 class="text-2xl font-bold">Quy Đổi & Giftcode</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/20 rounded-2xl p-5 mb-8">
+                        <p class="text-yellow-300 mb-4">Quy Đổi Vàng Sang Kim Cương</p>
+                        <input id="exchange-amount" type="number" value="0" 
+                               class="w-full bg-white text-black rounded-2xl px-6 py-4 text-2xl font-bold text-center">
+                        <div class="flex justify-between text-sm mt-4">
+                            <span>Tỷ lệ: <span class="text-yellow-300">125 vàng = 1 kim cương</span></span>
+                            <span id="exchange-result" class="font-bold text-blue-300">0 kim cương</span>
+                        </div>
+                        <button onclick="exchangeGold()" 
+                                class="mt-6 w-full bg-emerald-500 py-4 rounded-3xl font-bold">XÁC NHẬN QUY ĐỔI</button>
+                    </div>
+                    
+                    <div class="bg-white/20 rounded-2xl p-5">
+                        <p class="flex items-center gap-3 mb-4">
+                            <i class="fa-solid fa-gift text-3xl text-red-400"></i>
+                            <span class="text-xl font-bold">Nhập Giftcode</span>
+                        </p>
+                        <div class="flex gap-3">
+                            <input id="giftcode-input" type="text" placeholder="NHẬP MÃ GIFTCODE..." 
+                                   class="flex-1 bg-white text-black rounded-2xl px-6 py-4 text-lg">
+                            <button onclick="redeemGiftcode()" 
+                                    class="bg-red-500 px-8 rounded-2xl font-bold">Nhận</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: NHIỆM VỤ -->
+            <div id="tab-nhiem-vu" class="tab-content">
+                <div class="space-y-6">
+                    <div class="bg-white/10 rounded-3xl p-6">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-2xl font-bold flex items-center gap-3">
+                                    <i class="fa-solid fa-film"></i> Xem quảng cáo
+                                </p>
+                                <p class="text-sm mt-2">Cứ sau 15 phút nhận 20.000 vàng hoặc 50 kim cương</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-6">
+                            <button onclick="claimAdReward(20000, 'vàng')" 
+                                    class="bg-yellow-400 text-black py-4 rounded-3xl font-bold">Nhận Vàng</button>
+                            <button onclick="claimAdReward(50, 'kim')" 
+                                    class="bg-blue-500 py-4 rounded-3xl font-bold">Nhận Kim cương</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/10 rounded-3xl p-6">
+                        <p class="text-2xl font-bold mb-4 flex items-center gap-3">
+                            <i class="fa-solid fa-bullseye"></i> Nhiệm vụ thêm
+                        </p>
+                        <div class="bg-white/20 p-5 rounded-2xl">
+                            <p class="font-bold">Tham gia nhiệm vụ để kiếm vàng</p>
+                            <p class="text-sm text-yellow-200">nhận tối đa 10,000,000 vàng</p>
+                            <button onclick="joinExtraTask()" 
+                                    class="mt-4 bg-yellow-400 text-black px-12 py-3 rounded-3xl font-bold">Tham gia</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/10 rounded-3xl p-6">
+                        <p class="text-2xl font-bold mb-2 flex items-center gap-3">
+                            <i class="fa-solid fa-bullhorn"></i> Tham gia kênh Telegram
+                        </p>
+                        <p id="telegram-status" class="text-yellow-200 text-sm">Đang tải nhiệm vụ Telegram...</p>
+                        <button onclick="joinTelegram()" 
+                                class="mt-6 w-full bg-white text-black py-4 rounded-3xl font-bold">THAM GIA NGAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: MỜI BẠN BÈ -->
+            <div id="tab-moi-ban" class="tab-content">
+                <div class="text-center py-4">
+                    <div class="inline-flex items-center gap-3 bg-white/20 px-8 py-3 rounded-3xl mb-6">
+                        <i class="fa-solid fa-gift text-3xl text-red-400"></i>
+                        <div class="text-left">
+                            <p class="font-bold">Giới thiệu thành công nhận ngay</p>
+                            <p class="text-2xl text-yellow-300">300,000 vàng + 1,000 kim cương</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/20 rounded-3xl p-6 mb-6">
+                        <p class="text-sm mb-3">Link mời của bạn</p>
+                        <div class="flex gap-2 bg-white/10 rounded-2xl p-2">
+                            <input id="referral-link" readonly value="https://t.me/GomXu_Bot/miner123" 
+                                   class="flex-1 bg-transparent px-4 text-sm">
+                            <button onclick="copyReferral()" 
+                                    class="bg-emerald-500 px-8 rounded-2xl font-bold">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/20 rounded-3xl p-6">
+                        <p class="font-bold text-xl mb-6">Tổng Quan</p>
+                        <div class="grid grid-cols-3 gap-6 text-center">
+                            <div>
+                                <p class="text-3xl font-bold text-blue-300" id="invited-count">0</p>
+                                <p class="text-xs">Đã mời</p>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-yellow-300" id="invited-gold">0</p>
+                                <p class="text-xs">Vàng nhận</p>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-blue-300" id="invited-diamond">0</p>
+                                <p class="text-xs">Kim nhận</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: RÚT TIỀN (ĐÃ THÊM LIÊN KẾT NGÂN HÀNG) -->
+            <div id="tab-rut-tien" class="tab-content">
+                <div class="bg-white/20 rounded-3xl p-6">
+                    <h2 class="text-3xl font-bold text-center mb-8 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-money-bill-wave"></i> Rút Tiền
+                    </h2>
+
+                    <!-- PHẦN LIÊN KẾT NGÂN HÀNG (nếu chưa liên kết) -->
+                    <div id="bank-link-section" class="mb-8" style="display: none;">
+                        <p class="text-lg font-bold mb-4 text-center">Liên kết ngân hàng để rút tiền nhanh</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs block mb-1">Ngân hàng</label>
+                                <select id="link-bank" class="w-full bg-white text-black rounded-2xl px-6 py-4">
+                                    <option>VCB - Ngân hàng Vietcombank</option>
+                                    <option>BIDV</option>
+                                    <option>Techcombank</option>
+                                    <option>Momo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs block mb-1">Số tài khoản</label>
+                                <input id="link-account" type="text" placeholder="Nhập số tài khoản" class="w-full bg-white text-black rounded-2xl px-6 py-4">
+                            </div>
+                            <div>
+                                <label class="text-xs block mb-1">Chủ tài khoản</label>
+                                <input id="link-name" type="text" placeholder="Họ và tên" class="w-full bg-white text-black rounded-2xl px-6 py-4">
+                            </div>
+                            <button onclick="linkBank()" class="w-full bg-emerald-500 py-4 rounded-3xl font-bold text-lg">Liên Kết Ngân Hàng</button>
+                        </div>
+                    </div>
+
+                    <!-- Form rút tiền (tự động điền nếu đã liên kết) -->
+                    <div class="mb-8">
+                        <div class="flex gap-3 mb-4">
+                            <button onclick="selectWithdrawType(0)" id="btn-bank" class="flex-1 py-4 bg-yellow-400 text-black rounded-3xl font-bold active">Ngân Hàng</button>
+                            <button onclick="selectWithdrawType(1)" id="btn-wallet" class="flex-1 py-4 bg-white/30 rounded-3xl font-bold">Ví Điện Tử</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs block mb-1">Ngân hàng / Ví</label>
+                                <input id="bank-display" readonly class="w-full bg-gray-300 text-black rounded-2xl px-6 py-4 cursor-not-allowed" value="Chưa liên kết">
+                            </div>
+                            <div>
+                                <label class="text-xs block mb-1">Số tài khoản</label>
+                                <input id="account-display" readonly class="w-full bg-gray-300 text-black rounded-2xl px-6 py-4 cursor-not-allowed" value="Chưa liên kết">
+                            </div>
+                            <div>
+                                <label class="text-xs block mb-1">Chủ tài khoản</label>
+                                <input id="name-display" readonly class="w-full bg-gray-300 text-black rounded-2xl px-6 py-4 cursor-not-allowed" value="Chưa liên kết">
+                            </div>
+                            <div>
+                                <label class="text-xs block mb-1">Số vàng rút</label>
+                                <input id="withdraw-gold" type="number" value="0" class="w-full bg-white text-black rounded-2xl px-6 py-4 text-2xl">
+                            </div>
+                            <div class="bg-white/10 p-4 rounded-2xl">
+                                <p class="text-xs">Số tiền nhận được</p>
+                                <p id="withdraw-vnd" class="text-3xl font-bold text-yellow-300">0 VND</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="submitWithdraw()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 py-6 rounded-3xl text-2xl font-bold shadow-lg">
+                        RÚT VỀ NGÂN HÀNG
+                    </button>
+                    
+                    <div class="mt-8 text-xs bg-red-500/20 p-4 rounded-2xl">
+                        ⚠️ Mỗi thiết bị chỉ được sử dụng 1 tài khoản.<br>
+                        Gian lận, dùng nhiều tài khoản sẽ bị từ chối thanh toán.
+                    </div>
+
+                    <!-- LỊCH SỬ RÚT TIỀN -->
+                    <div class="mt-8">
+                        <p class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> Lịch sử rút tiền
+                        </p>
+                        <div id="withdraw-history" class="space-y-4 max-h-64 overflow-y-auto pr-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-yellow-400 to-emerald-600 border-t border-white/30 py-2">
+            <div class="flex justify-around text-white text-[10px]">
+                <div onclick="switchTab(0)" class="flex flex-col items-center cursor-pointer tab-nav active">
+                    <i class="fa-solid fa-cart-shopping text-2xl"></i>
+                    <span class="mt-1">Khai Thác</span>
+                </div>
+                <div onclick="switchTab(1)" class="flex flex-col items-center cursor-pointer tab-nav">
+                    <i class="fa-solid fa-arrow-right-arrow-left text-2xl"></i>
+                    <span class="mt-1">Quy Đổi</span>
+                </div>
+                <div onclick="switchTab(2)" class="flex flex-col items-center cursor-pointer tab-nav">
+                    <i class="fa-solid fa-list-check text-2xl"></i>
+                    <span class="mt-1">Nhiệm Vụ</span>
+                </div>
+                <div onclick="switchTab(3)" class="flex flex-col items-center cursor-pointer tab-nav">
+                    <i class="fa-solid fa-users text-2xl"></i>
+                    <span class="mt-1">Mời Bạn</span>
+                </div>
+                <div onclick="switchTab(4)" class="flex flex-col items-center cursor-pointer tab-nav">
+                    <i class="fa-solid fa-wallet text-2xl"></i>
+                    <span class="mt-1">Rút Tiền</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== LOCALSTORAGE & USER SYSTEM ====================
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('gomxu_users')) || [];
+        let giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
+        let withdrawHistory = JSON.parse(localStorage.getItem('withdrawHistory')) || [];
+
+        function saveData() {
+            if (currentUser) {
+                const idx = users.findIndex(u => u.username === currentUser.username);
+                if (idx > -1) users[idx] = currentUser;
+                localStorage.setItem('gomxu_users', JSON.stringify(users));
+            }
+            localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
+            localStorage.setItem('withdrawHistory', JSON.stringify(withdrawHistory));
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast-${type} show px-6 py-4 shadow-2xl`;
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // ==================== CHUYỂN FORM AUTH ====================
+        function showAuthForm(form) {
+            document.getElementById('form-login').classList.toggle('active', form === 'login');
+            document.getElementById('form-register').classList.toggle('active', form === 'register');
+            document.getElementById('btn-login').classList.toggle('active', form === 'login');
+            document.getElementById('btn-register').classList.toggle('active', form === 'register');
+        }
+
+        // ==================== ĐĂNG KÝ (THÊM THÔNG TIN) ====================
+        function registerGame() {
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const fullname = document.getElementById('reg-fullname').value.trim();
+
+            if (!username || !password || !email || !phone || !fullname) {
+                return showToast("Vui lòng điền đầy đủ thông tin!", 'error');
+            }
+            if (users.find(u => u.username === username)) return showToast("Tài khoản đã tồn tại!", 'error');
+
+            const newUser = {
+                username,
+                password,
+                email,
+                phone,
+                fullname,
+                gold: 0,
+                diamond: 0,
+                level: 1,
+                miningRate: 1.00,
+                invited: 0,
+                invitedGold: 0,
+                invitedDiamond: 0,
+                bankInfo: null // Chưa liên kết ngân hàng
+            };
+            users.push(newUser);
+            localStorage.setItem('gomxu_users', JSON.stringify(users));
+            showToast(`Đăng ký thành công! Chào mừng ${fullname}`, 'success');
+            loginAfterRegister(newUser);
+        }
+
+        // ==================== ĐĂNG NHẬP ====================
+        function loginGame() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                loginAfterRegister(user);
+            } else {
+                showToast("Sai tài khoản hoặc mật khẩu!", 'error');
+            }
+        }
+
+        function loginAfterRegister(user) {
+            currentUser = user;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-frame').classList.remove('hidden');
+            document.getElementById('current-username').textContent = currentUser.username;
+            
+            if (currentUser.username.toLowerCase() === "admin") {
+                document.getElementById('admin-btn').style.display = "flex";
+            }
+            
+            loadUserData();
+            initGame();
+        }
+
+        function logoutGame() {
+            if (confirm("Đăng xuất?")) {
+                document.getElementById('app-frame').classList.add('hidden');
+                document.getElementById('auth-screen').style.display = 'flex';
+                showAuthForm('login');
+                currentUser = null;
+            }
+        }
+
+        function loadUserData() {
+            document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
+            document.getElementById('diamond-balance').textContent = currentUser.diamond;
+            document.getElementById('level').textContent = `Lv. ${currentUser.level}`;
+            document.getElementById('mining-rate').textContent = currentUser.miningRate.toFixed(2);
+            document.getElementById('upgrade-cost').textContent = (currentUser.level * 1000).toLocaleString();
+            document.getElementById('invited-count').textContent = currentUser.invited;
+            document.getElementById('invited-gold').textContent = currentUser.invitedGold;
+            document.getElementById('invited-diamond').textContent = currentUser.invitedDiamond;
+
+            // Load thông tin ngân hàng nếu đã liên kết
+            if (currentUser.bankInfo) {
+                document.getElementById('bank-display').value = currentUser.bankInfo.bank;
+                document.getElementById('account-display').value = currentUser.bankInfo.account;
+                document.getElementById('name-display').value = currentUser.bankInfo.name;
+                document.getElementById('bank-link-section').style.display = 'none';
+            } else {
+                document.getElementById('bank-link-section').style.display = 'block';
+            }
+
+            loadWithdrawHistory();
+        }
+
+        // ==================== LIÊN KẾT NGÂN HÀNG ====================
+        function linkBank() {
+            const bank = document.getElementById('link-bank').value;
+            const account = document.getElementById('link-account').value.trim();
+            const name = document.getElementById('link-name').value.trim();
+
+            if (!bank || !account || !name) return showToast("Vui lòng điền đầy đủ thông tin ngân hàng!", 'error');
+
+            currentUser.bankInfo = { bank, account, name };
+            saveData();
+            loadUserData();
+            showToast("Liên kết ngân hàng thành công! Thông tin đã được lưu.", 'success');
+        }
+
+        function openAdminPanel() {
+            window.open('admin.html', '_blank');
+        }
+
+        // ==================== KHAI THÁC ====================
+        let isMining = false;
+        let miningInterval = null;
+        let miningTimeout = null;
+        const MINING_DURATION = 12 * 60 * 60 * 1000;
+
+        function toggleMining() {
+            if (!currentUser) return;
+
+            if (isMining) {
+                clearInterval(miningInterval);
+                clearTimeout(miningTimeout);
+                isMining = false;
+                document.getElementById('mining-text').textContent = 'BẮT ĐẦU KHAI THÁC';
+                document.getElementById('mining-button').classList.remove('bg-red-500');
+                showToast('Đã dừng khai thác!', 'success');
+            } else {
+                isMining = true;
+                document.getElementById('mining-text').textContent = 'ĐANG ĐÀO...';
+                document.getElementById('mining-button').classList.add('bg-red-500');
+                showToast('Bắt đầu khai thác!', 'success');
+
+                miningInterval = setInterval(() => {
+                    currentUser.gold += currentUser.miningRate;
+                    updateBalances();
+                }, 1000);
+
+                miningTimeout = setTimeout(() => {
+                    if (isMining) toggleMining();
+                    showToast('Hết thời gian khai thác 12 giờ! Bấm lại để tiếp tục.', 'error');
+                }, MINING_DURATION);
+            }
+        }
+
+        // ==================== RÚT TIỀN ====================
+        function submitWithdraw() {
+            if (!currentUser) return;
+
+            const goldAmount = parseInt(document.getElementById('withdraw-gold').value) || 0;
+
+            if (!currentUser.bankInfo) return showToast('Vui lòng liên kết ngân hàng trước khi rút!', 'error');
+            if (goldAmount <= 0) return showToast('Số vàng rút phải lớn hơn 0!', 'error');
+            if (goldAmount > currentUser.gold) return showToast('Số dư không đủ!', 'error');
+
+            currentUser.gold -= goldAmount;
+            updateBalances();
+
+            withdrawHistory.unshift({
+                time: new Date().toLocaleString('vi-VN'),
+                bank: currentUser.bankInfo.bank,
+                account: currentUser.bankInfo.account,
+                gold: goldAmount,
+                vnd: (goldAmount * 0.0005).toLocaleString('vi-VN'),
+                status: 'Đang chờ'
+            });
+
+            saveData();
+            loadWithdrawHistory();
+
+            showToast(`Rút thành công ${goldAmount.toLocaleString()} vàng! Chờ duyệt.`, 'success');
+
+            document.getElementById('withdraw-gold').value = '0';
+            calculateWithdraw();
+        }
+
+        function loadWithdrawHistory() {
+            const container = document.getElementById('withdraw-history');
+            container.innerHTML = '';
+            withdrawHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-white/10 p-4 rounded-2xl flex justify-between items-center';
+                div.innerHTML = `
+                    <div>
+                        <div class="text-xs text-gray-300">${item.time}</div>
+                        <div class="font-bold">${item.bank} • ${item.account}</div>
+                        <div class="text-yellow-300">${item.gold.toLocaleString()} vàng = ${item.vnd} VND</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-4 py-1 bg-yellow-400 text-black text-xs rounded-3xl">${item.status}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function calculateWithdraw() {
+            const g = parseInt(document.getElementById('withdraw-gold').value) || 0;
+            document.getElementById('withdraw-vnd').textContent = (g * 0.0005).toLocaleString('vi-VN') + ' VND';
+        }
+
+        document.getElementById('withdraw-gold').addEventListener('input', calculateWithdraw);
+
+        // ==================== CÁC HÀM KHÁC GIỮ NGUYÊN ====================
+        function updateBalances() {
+            if (!currentUser) return;
+            document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
+            document.getElementById('diamond-balance').textContent = currentUser.diamond;
+            saveData();
+        }
+
+        function upgradeLevel() {
+            if (!currentUser) return;
+            const cost = currentUser.level * 1000;
+            if (currentUser.diamond >= cost) {
+                currentUser.diamond -= cost;
+                currentUser.level++;
+                currentUser.miningRate += 2.5;
+                loadUserData();
+                updateBalances();
+                showToast(`Nâng cấp thành công lên Lv. ${currentUser.level}!`, 'success');
+            } else showToast('Không đủ kim cương!', 'error');
+        }
+
+        function exchangeGold() {
+            if (!currentUser) return;
+            const amount = parseInt(document.getElementById('exchange-amount').value) || 0;
+            if (amount >= 125 && currentUser.gold >= amount) {
+                const gems = Math.floor(amount / 125);
+                currentUser.gold -= amount;
+                currentUser.diamond += gems;
+                updateBalances();
+                showToast(`Quy đổi thành công ${gems} kim cương!`, 'success');
+            } else showToast('Không đủ vàng hoặc tối thiểu 125!', 'error');
+        }
+
+        function redeemGiftcode() {
+            if (!currentUser) return;
+            const codeInput = document.getElementById('giftcode-input').value.trim().toUpperCase();
+            if (!codeInput) return showToast("Nhập mã giftcode!", 'error');
+
+            giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
+            const found = giftcodes.find(g => g.code.toUpperCase() === codeInput);
+            
+            if (found && (found.usedCount || 0) < (found.maxUses || 1)) {
+                currentUser.gold += found.gold || 0;
+                currentUser.diamond += found.diamond || 0;
+                found.usedCount = (found.usedCount || 0) + 1;
+                localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
+                saveData();
+                updateBalances();
+                showToast(`Thành công! +${found.gold.toLocaleString()} vàng + ${found.diamond} kim`, 'success');
+                document.getElementById('giftcode-input').value = '';
+            } else {
+                showToast("Giftcode không hợp lệ hoặc đã hết hạn!", 'error');
+            }
+        }
+
+        function claimAdReward(amount, type) {
+            if (!currentUser) return;
+            if (type === 'vàng') currentUser.gold += amount;
+            else currentUser.diamond += amount;
+            updateBalances();
+            showToast(`Nhận ${amount} ${type}!`, 'success');
+        }
+
+        function joinExtraTask() {
+            if (!currentUser) return;
+            currentUser.gold += 500000;
+            updateBalances();
+            showToast('Hoàn thành nhiệm vụ thêm! +500,000 vàng', 'success');
+        }
+
+        function joinTelegram() {
+            if (!currentUser) return;
+            document.getElementById('telegram-status').innerHTML = '✅ Đã tham gia!<br>+300.000 vàng';
+            currentUser.gold += 300000;
+            updateBalances();
+            showToast('Tham gia kênh Telegram thành công!', 'success');
+        }
+
+        function copyReferral() {
+            if (!currentUser) return;
+            const link = document.getElementById('referral-link');
+            link.select();
+            document.execCommand('copy');
+            currentUser.invited++;
+            currentUser.invitedGold += 100000;
+            currentUser.invitedDiamond += 50;
+            currentUser.gold += 100000;
+            currentUser.diamond += 50;
+            loadUserData();
+            updateBalances();
+            showToast('Copy link mời thành công!', 'success');
+        }
+
+        function selectWithdrawType(t) {
+            document.getElementById('btn-bank').classList.toggle('active', t === 0);
+            document.getElementById('btn-wallet').classList.toggle('active', t === 1);
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-nav').forEach(el => el.classList.remove('active'));
+            const tabs = ['tab-khai-thac','tab-quy-doi','tab-nhiem-vu','tab-moi-ban','tab-rut-tien'];
+            document.getElementById(tabs[tab]).classList.add('active');
+            document.querySelectorAll('.tab-nav')[tab].classList.add('active');
+        }
+
+        function showFAQ() {
+            showToast('Câu hỏi thường gặp:\n- 1 vàng = 0.0005 VND\n- Nâng cấp thợ đào tăng tốc độ\n- Giftcode từ admin', 'success');
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        function initGame() {
+            updateTime();
+            setInterval(updateTime, 30000);
+            calculateWithdraw();
+            switchTab(0);
+            loadWithdrawHistory();
+        }
+
+        tailwind.config = { content: ["*"] };
+
+        window.onload = () => {
+            const savedUser = localStorage.getItem('current_gomxu_user');
+            if (savedUser) {
+                currentUser = users.find(u => u.username === savedUser);
+                if (currentUser) {
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('app-frame').classList.remove('hidden');
+                    document.getElementById('current-username').textContent = currentUser.username;
+                    if (currentUser.username.toLowerCase() === "admin") document.getElementById('admin-btn').style.display = "flex";
+                    loadUserData();
+                    initGame();
+                }
+            }
+        };
+    </script>
+</body>
+</html>
