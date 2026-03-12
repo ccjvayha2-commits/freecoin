@@ -76,7 +76,7 @@
     <!-- TOAST -->
     <div id="toast" class="hidden"></div>
 
-    <!-- AUTH SCREEN (ĐĂNG NHẬP & ĐĂNG KÝ RIÊNG) -->
+    <!-- AUTH SCREEN -->
     <div id="auth-screen" class="flex items-center justify-center min-h-screen w-full">
         <div class="bg-slate-800 p-8 rounded-3xl w-96 shadow-2xl border border-yellow-400">
             <div class="text-center mb-8">
@@ -85,7 +85,6 @@
                 <p class="text-slate-400 mt-2">Đăng nhập hoặc đăng ký tài khoản</p>
             </div>
 
-            <!-- Tabs chuyển form -->
             <div class="flex mb-6">
                 <button onclick="showAuthForm('login')" id="btn-login" class="flex-1 py-3 bg-yellow-400 text-black font-bold rounded-l-3xl active">Đăng Nhập</button>
                 <button onclick="showAuthForm('register')" id="btn-register" class="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-r-3xl">Đăng Ký</button>
@@ -95,7 +94,7 @@
             <div id="form-login" class="auth-form active space-y-6">
                 <div>
                     <label class="block text-sm text-slate-300 mb-2">Tên tài khoản</label>
-                    <input id="login-username" placeholder="Ví dụ: anhkeodz" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
+                    <input id="login-username" placeholder="Ví dụ: admin" class="w-full bg-slate-700 text-white rounded-3xl px-6 py-4 text-lg">
                 </div>
                 <div>
                     <label class="block text-sm text-slate-300 mb-2">Mật khẩu</label>
@@ -104,7 +103,7 @@
                 <button onclick="loginGame()" class="w-full bg-yellow-400 text-black font-bold py-5 rounded-3xl text-xl">ĐĂNG NHẬP</button>
             </div>
 
-            <!-- FORM ĐĂNG KÝ (THÊM THÔNG TIN) -->
+            <!-- FORM ĐĂNG KÝ -->
             <div id="form-register" class="auth-form hidden space-y-6">
                 <div>
                     <label class="block text-sm text-slate-300 mb-2">Tên đăng nhập</label>
@@ -307,9 +306,11 @@
                         <p class="text-2xl font-bold mb-2 flex items-center gap-3">
                             <i class="fa-solid fa-bullhorn"></i> Tham gia kênh Telegram
                         </p>
-                        <p id="telegram-status" class="text-yellow-200 text-sm">Đang tải nhiệm vụ Telegram...</p>
-                        <button onclick="joinTelegram()" 
-                                class="mt-6 w-full bg-white text-black py-4 rounded-3xl font-bold">THAM GIA NGAY</button>
+                        <p id="telegram-status" class="text-yellow-200 text-sm">Tham gia 2 kênh để nhận thưởng</p>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <button onclick="joinTelegramChannel()" class="bg-blue-500 py-4 rounded-3xl font-bold">Tham gia Kênh Thông Báo</button>
+                            <button onclick="joinTelegramGroup()" class="bg-purple-500 py-4 rounded-3xl font-bold">Tham gia Nhóm Chat</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -355,14 +356,14 @@
                 </div>
             </div>
 
-            <!-- TAB 5: RÚT TIỀN (ĐÃ THÊM LIÊN KẾT NGÂN HÀNG) -->
+            <!-- TAB 5: RÚT TIỀN -->
             <div id="tab-rut-tien" class="tab-content">
                 <div class="bg-white/20 rounded-3xl p-6">
                     <h2 class="text-3xl font-bold text-center mb-8 flex items-center justify-center gap-3">
                         <i class="fa-solid fa-money-bill-wave"></i> Rút Tiền
                     </h2>
 
-                    <!-- PHẦN LIÊN KẾT NGÂN HÀNG (nếu chưa liên kết) -->
+                    <!-- PHẦN LIÊN KẾT NGÂN HÀNG -->
                     <div id="bank-link-section" class="mb-8" style="display: none;">
                         <p class="text-lg font-bold mb-4 text-center">Liên kết ngân hàng để rút tiền nhanh</p>
                         <div class="space-y-4">
@@ -387,7 +388,7 @@
                         </div>
                     </div>
 
-                    <!-- Form rút tiền (tự động điền nếu đã liên kết) -->
+                    <!-- Form rút tiền -->
                     <div class="mb-8">
                         <div class="flex gap-3 mb-4">
                             <button onclick="selectWithdrawType(0)" id="btn-bank" class="flex-1 py-4 bg-yellow-400 text-black rounded-3xl font-bold active">Ngân Hàng</button>
@@ -418,7 +419,8 @@
                         </div>
                     </div>
                     
-                    <button onclick="submitWithdraw()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 py-6 rounded-3xl text-2xl font-bold shadow-lg">
+                    <button onclick="submitWithdraw()" 
+                            class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 py-6 rounded-3xl text-2xl font-bold shadow-lg">
                         RÚT VỀ NGÂN HÀNG
                     </button>
                     
@@ -472,6 +474,10 @@
         let giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
         let withdrawHistory = JSON.parse(localStorage.getItem('withdrawHistory')) || [];
 
+        // Tài khoản admin cố định
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "admin123";
+
         function saveData() {
             if (currentUser) {
                 const idx = users.findIndex(u => u.username === currentUser.username);
@@ -498,7 +504,7 @@
             document.getElementById('btn-register').classList.toggle('active', form === 'register');
         }
 
-        // ==================== ĐĂNG KÝ (THÊM THÔNG TIN) ====================
+        // ==================== ĐĂNG KÝ ====================
         function registerGame() {
             const username = document.getElementById('reg-username').value.trim();
             const password = document.getElementById('reg-password').value.trim();
@@ -524,7 +530,10 @@
                 invited: 0,
                 invitedGold: 0,
                 invitedDiamond: 0,
-                bankInfo: null // Chưa liên kết ngân hàng
+                bankInfo: null,
+                telegramJoined: false, // Chưa tham gia Telegram
+                adViewsToday: 0, // Số lần xem quảng cáo hôm nay
+                lastAdView: null // Thời gian xem quảng cáo cuối
             };
             users.push(newUser);
             localStorage.setItem('gomxu_users', JSON.stringify(users));
@@ -532,11 +541,35 @@
             loginAfterRegister(newUser);
         }
 
-        // ==================== ĐĂNG NHẬP ====================
+        // ==================== ĐĂNG NHẬP (THÊM CHECK ADMIN CỐ ĐỊNH) ====================
         function loginGame() {
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            const user = users.find(u => u.username === username && u.password === password);
+
+            // Check tài khoản admin cố định trước
+            if (username.toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                currentUser = {
+                    username: ADMIN_USERNAME,
+                    password: ADMIN_PASSWORD,
+                    gold: 0,
+                    diamond: 0,
+                    level: 1,
+                    miningRate: 1.00,
+                    invited: 0,
+                    invitedGold: 0,
+                    invitedDiamond: 0,
+                    bankInfo: null,
+                    telegramJoined: false,
+                    adViewsToday: 0,
+                    lastAdView: null,
+                    isAdmin: true // Đánh dấu admin
+                };
+                loginAfterRegister(currentUser);
+                return;
+            }
+
+            // Check user bình thường
+            const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
             if (user) {
                 loginAfterRegister(user);
             } else {
@@ -550,7 +583,7 @@
             document.getElementById('app-frame').classList.remove('hidden');
             document.getElementById('current-username').textContent = currentUser.username;
             
-            if (currentUser.username.toLowerCase() === "admin") {
+            if (currentUser.username.toLowerCase() === ADMIN_USERNAME || currentUser.isAdmin) {
                 document.getElementById('admin-btn').style.display = "flex";
             }
             
@@ -577,7 +610,6 @@
             document.getElementById('invited-gold').textContent = currentUser.invitedGold;
             document.getElementById('invited-diamond').textContent = currentUser.invitedDiamond;
 
-            // Load thông tin ngân hàng nếu đã liên kết
             if (currentUser.bankInfo) {
                 document.getElementById('bank-display').value = currentUser.bankInfo.bank;
                 document.getElementById('account-display').value = currentUser.bankInfo.account;
@@ -601,18 +633,66 @@
             currentUser.bankInfo = { bank, account, name };
             saveData();
             loadUserData();
-            showToast("Liên kết ngân hàng thành công! Thông tin đã được lưu.", 'success');
+            showToast("Liên kết ngân hàng thành công!", 'success');
         }
 
-        function openAdminPanel() {
-            window.open('admin.html', '_blank');
+        // ==================== THAM GIA TELEGRAM (CHỈ NHẬN 1 LẦN) ====================
+        function joinTelegramChannel() {
+            window.open('https://t.me/KenhThongBaoBotFree', '_blank');
+            if (!currentUser.telegramJoined) {
+                currentUser.gold += 300000;
+                currentUser.telegramJoined = true;
+                saveData();
+                updateBalances();
+                showToast('Tham gia kênh thành công! +300,000 vàng', 'success');
+            } else {
+                showToast('Bạn đã nhận thưởng kênh này rồi!', 'error');
+            }
         }
 
-        // ==================== KHAI THÁC ====================
-        let isMining = false;
-        let miningInterval = null;
-        let miningTimeout = null;
-        const MINING_DURATION = 12 * 60 * 60 * 1000;
+        function joinTelegramGroup() {
+            window.open('https://t.me/NhomChatBotTele', '_blank');
+            if (!currentUser.telegramJoined) {
+                currentUser.gold += 300000;
+                currentUser.telegramJoined = true;
+                saveData();
+                updateBalances();
+                showToast('Tham gia nhóm thành công! +300,000 vàng', 'success');
+            } else {
+                showToast('Bạn đã nhận thưởng nhóm này rồi!', 'error');
+            }
+        }
+
+        // ==================== XEM QUẢNG CÁO (GIỚI HẠN 2 LẦN/NGÀY) ====================
+        function claimAdReward(amount, type) {
+            if (!currentUser) return;
+
+            const today = new Date().toDateString();
+            if (currentUser.lastAdView !== today) {
+                currentUser.adViewsToday = 0;
+                currentUser.lastAdView = today;
+            }
+
+            if (currentUser.adViewsToday >= 2) {
+                return showToast('Hôm nay bạn đã nhận quảng cáo đủ 2 lần!', 'error');
+            }
+
+            if (type === 'vàng') currentUser.gold += amount;
+            else currentUser.diamond += amount;
+
+            currentUser.adViewsToday++;
+            saveData();
+            updateBalances();
+            showToast(`Nhận ${amount} ${type}! (Còn ${2 - currentUser.adViewsToday} lần hôm nay)`, 'success');
+        }
+
+        // ==================== CÁC HÀM KHÁC GIỮ NGUYÊN ====================
+        function updateBalances() {
+            if (!currentUser) return;
+            document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
+            document.getElementById('diamond-balance').textContent = currentUser.diamond;
+            saveData();
+        }
 
         function toggleMining() {
             if (!currentUser) return;
@@ -637,12 +717,58 @@
 
                 miningTimeout = setTimeout(() => {
                     if (isMining) toggleMining();
-                    showToast('Hết thời gian khai thác 12 giờ! Bấm lại để tiếp tục.', 'error');
+                    showToast('Hết thời gian khai thác 12 giờ!', 'error');
                 }, MINING_DURATION);
             }
         }
 
-        // ==================== RÚT TIỀN ====================
+        function upgradeLevel() {
+            if (!currentUser) return;
+            const cost = currentUser.level * 1000;
+            if (currentUser.diamond >= cost) {
+                currentUser.diamond -= cost;
+                currentUser.level++;
+                currentUser.miningRate += 2.5;
+                loadUserData();
+                updateBalances();
+                showToast(`Nâng cấp thành công lên Lv. ${currentUser.level}!`, 'success');
+            } else showToast('Không đủ kim cương!', 'error');
+        }
+
+        function exchangeGold() {
+            if (!currentUser) return;
+            const amount = parseInt(document.getElementById('exchange-amount').value) || 0;
+            if (amount >= 125 && currentUser.gold >= amount) {
+                const gems = Math.floor(amount / 125);
+                currentUser.gold -= amount;
+                currentUser.diamond += gems;
+                updateBalances();
+                showToast(`Quy đổi thành công ${gems} kim cương!`, 'success');
+            } else showToast('Không đủ vàng hoặc tối thiểu 125!', 'error');
+        }
+
+        function redeemGiftcode() {
+            if (!currentUser) return;
+            const codeInput = document.getElementById('giftcode-input').value.trim().toUpperCase();
+            if (!codeInput) return showToast("Nhập mã giftcode!", 'error');
+
+            giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
+            const found = giftcodes.find(g => g.code.toUpperCase() === codeInput);
+            
+            if (found && (found.usedCount || 0) < (found.maxUses || 1)) {
+                currentUser.gold += found.gold || 0;
+                currentUser.diamond += found.diamond || 0;
+                found.usedCount = (found.usedCount || 0) + 1;
+                localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
+                saveData();
+                updateBalances();
+                showToast(`Thành công! +${found.gold.toLocaleString()} vàng + ${found.diamond} kim`, 'success');
+                document.getElementById('giftcode-input').value = '';
+            } else {
+                showToast("Giftcode không hợp lệ hoặc đã hết hạn!", 'error');
+            }
+        }
+
         function submitWithdraw() {
             if (!currentUser) return;
 
@@ -700,102 +826,8 @@
 
         document.getElementById('withdraw-gold').addEventListener('input', calculateWithdraw);
 
-        // ==================== CÁC HÀM KHÁC GIỮ NGUYÊN ====================
-        function updateBalances() {
-            if (!currentUser) return;
-            document.getElementById('gold-balance').textContent = currentUser.gold.toLocaleString('vi-VN');
-            document.getElementById('diamond-balance').textContent = currentUser.diamond;
-            saveData();
-        }
-
-        function upgradeLevel() {
-            if (!currentUser) return;
-            const cost = currentUser.level * 1000;
-            if (currentUser.diamond >= cost) {
-                currentUser.diamond -= cost;
-                currentUser.level++;
-                currentUser.miningRate += 2.5;
-                loadUserData();
-                updateBalances();
-                showToast(`Nâng cấp thành công lên Lv. ${currentUser.level}!`, 'success');
-            } else showToast('Không đủ kim cương!', 'error');
-        }
-
-        function exchangeGold() {
-            if (!currentUser) return;
-            const amount = parseInt(document.getElementById('exchange-amount').value) || 0;
-            if (amount >= 125 && currentUser.gold >= amount) {
-                const gems = Math.floor(amount / 125);
-                currentUser.gold -= amount;
-                currentUser.diamond += gems;
-                updateBalances();
-                showToast(`Quy đổi thành công ${gems} kim cương!`, 'success');
-            } else showToast('Không đủ vàng hoặc tối thiểu 125!', 'error');
-        }
-
-        function redeemGiftcode() {
-            if (!currentUser) return;
-            const codeInput = document.getElementById('giftcode-input').value.trim().toUpperCase();
-            if (!codeInput) return showToast("Nhập mã giftcode!", 'error');
-
-            giftcodes = JSON.parse(localStorage.getItem('gomxu_giftcodes')) || [];
-            const found = giftcodes.find(g => g.code.toUpperCase() === codeInput);
-            
-            if (found && (found.usedCount || 0) < (found.maxUses || 1)) {
-                currentUser.gold += found.gold || 0;
-                currentUser.diamond += found.diamond || 0;
-                found.usedCount = (found.usedCount || 0) + 1;
-                localStorage.setItem('gomxu_giftcodes', JSON.stringify(giftcodes));
-                saveData();
-                updateBalances();
-                showToast(`Thành công! +${found.gold.toLocaleString()} vàng + ${found.diamond} kim`, 'success');
-                document.getElementById('giftcode-input').value = '';
-            } else {
-                showToast("Giftcode không hợp lệ hoặc đã hết hạn!", 'error');
-            }
-        }
-
-        function claimAdReward(amount, type) {
-            if (!currentUser) return;
-            if (type === 'vàng') currentUser.gold += amount;
-            else currentUser.diamond += amount;
-            updateBalances();
-            showToast(`Nhận ${amount} ${type}!`, 'success');
-        }
-
-        function joinExtraTask() {
-            if (!currentUser) return;
-            currentUser.gold += 500000;
-            updateBalances();
-            showToast('Hoàn thành nhiệm vụ thêm! +500,000 vàng', 'success');
-        }
-
-        function joinTelegram() {
-            if (!currentUser) return;
-            document.getElementById('telegram-status').innerHTML = '✅ Đã tham gia!<br>+300.000 vàng';
-            currentUser.gold += 300000;
-            updateBalances();
-            showToast('Tham gia kênh Telegram thành công!', 'success');
-        }
-
-        function copyReferral() {
-            if (!currentUser) return;
-            const link = document.getElementById('referral-link');
-            link.select();
-            document.execCommand('copy');
-            currentUser.invited++;
-            currentUser.invitedGold += 100000;
-            currentUser.invitedDiamond += 50;
-            currentUser.gold += 100000;
-            currentUser.diamond += 50;
-            loadUserData();
-            updateBalances();
-            showToast('Copy link mời thành công!', 'success');
-        }
-
-        function selectWithdrawType(t) {
-            document.getElementById('btn-bank').classList.toggle('active', t === 0);
-            document.getElementById('btn-wallet').classList.toggle('active', t === 1);
+        function openAdminPanel() {
+            window.open('admin.html', '_blank');
         }
 
         function switchTab(tab) {
@@ -833,7 +865,9 @@
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('app-frame').classList.remove('hidden');
                     document.getElementById('current-username').textContent = currentUser.username;
-                    if (currentUser.username.toLowerCase() === "admin") document.getElementById('admin-btn').style.display = "flex";
+                    if (currentUser.username.toLowerCase() === ADMIN_USERNAME || currentUser.isAdmin) {
+                        document.getElementById('admin-btn').style.display = "flex";
+                    }
                     loadUserData();
                     initGame();
                 }
