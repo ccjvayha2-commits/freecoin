@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gom Xu ào Vàng</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root { --gradient: linear-gradient(135deg, #0f3443, #34e89e); --gold: #ffd700; --dark: rgba(0,0,0,0.4); }
+    body { font-family: Arial, sans-serif; background: var(--gradient); color: white; margin:0; padding:0; min-height:100vh; display:flex; flex-direction:column; }
+    header { background:var(--dark); padding:12px; text-align:center; font-weight:bold; font-size:1.3rem; }
+    .profile { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--dark); }
+    .user { display:flex; align-items:center; gap:10px; }
+    .user img { width:44px; height:44px; border-radius:50%; border:2px solid var(--gold); }
+    .stats { display:flex; gap:16px; font-size:0.95rem; }
+    .mining-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+    .miner { font-size:140px; animation: swing 3s infinite alternate; }
+    @keyframes swing { 0%{transform:rotate(-12deg);} 100%{transform:rotate(12deg);} }
+    .gold-count { font-size:3.8rem; font-weight:bold; color:var(--gold); text-shadow:0 0 12px var(--gold); }
+    .speed { font-size:1.2rem; margin:10px 0; }
+    button { background:linear-gradient(45deg, #ffd700, #ffaa00); color:black; font-weight:bold; padding:16px 32px; border:none; border-radius:50px; margin:12px; font-size:1.2rem; box-shadow:0 5px 18px rgba(0,0,0,0.5); cursor:pointer; }
+    button:active { transform:scale(0.96); }
+    .tabs { display:flex; background:var(--dark); position:sticky; bottom:0; border-top:1px solid rgba(255,255,255,0.15); }
+    .tab { flex:1; padding:14px; text-align:center; font-weight:bold; cursor:pointer; }
+    .tab.active { background:rgba(255,215,0,0.25); }
+    #withdrawScreen { padding:20px; display:none; }
+    input, select { width:100%; padding:14px; margin:10px 0; border-radius:12px; border:none; font-size:1rem; }
+  </style>
+</head>
+<body>
+
+<header>Gom Xu ào Vàng</header>
+
+<div class="profile">
+  <div class="user">
+    <img id="avatar" src="" alt="avatar">
+    <span id="username">Obito</span>
+  </div>
+  <div class="stats">
+    <span> <span id="diamonds">0</span></span>
+    <span> <span id="gold">1,742,890</span></span>
+  </div>
+</div>
+
+<div class="mining-area" id="mainScreen">
+  <div class="miner"></div>
+  <div class="gold-count" id="currentGold">1,742,890</div>
+  <div class="speed">Tc  ào: <span id="miningSpeed">8.00</span> vàng/giây</div>
+  <button id="startMine">Bt u khai thác</button>
+  <button id="upgrade">Nâng cp (5,000 )</button>
+</div>
+
+<div id="withdrawScreen">
+  <h2>Rút Vàng (Demo o)</h2>
+  <select id="withdrawType">
+    <option value="momo">MoMo</option>
+    <option value="zalopay">ZaloPay</option>
+    <option value="bank">Ngân hàng</option>
+  </select>
+  <input id="accountNumber" placeholder="S tài khon / ST ví" type="text">
+  <input id="accountName" placeholder="Tên ch tài khon" type="text">
+  <input id="withdrawAmount" type="number" placeholder="S vàng rút (ti thiu 8,000)" min="8000">
+  <p>Tng nhn (demo): <span id="receiveVND">0</span> VND</p>
+  <button onclick="submitWithdrawRequest()">Gi Yêu Cu Rút</button>
+  <div id="withdrawHistory" style="margin-top:20px; font-size:0.9rem;"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('mainScreen')">Khai Thác</div>
+  <div class="tab" onclick="showTab('withdrawScreen')">Rút Tin</div>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready(); tg.expand();
+
+let gold = 1742890;
+let diamonds = 0;
+let miningSpeed = 8.00;
+
+document.getElementById("username").textContent = tg.initDataUnsafe.user?.first_name || "Ngi chi";
+if (tg.initDataUnsafe.user?.photo_url) {
+  document.getElementById("avatar").src = tg.initDataUnsafe.user.photo_url;
+}
+
+function updateDisplay() {
+  document.getElementById("gold").textContent = gold.toLocaleString();
+  document.getElementById("currentGold").textContent = gold.toLocaleString();
+  document.getElementById("diamonds").textContent = diamonds;
+  document.getElementById("miningSpeed").textContent = miningSpeed.toFixed(2);
+}
+updateDisplay();
+
+document.getElementById("startMine").onclick = () => {
+  alert("ang khai thác... (demo tng vàng)");
+  gold += 5000;
+  updateDisplay();
+};
+
+document.getElementById("upgrade").onclick = () => {
+  if (diamonds >= 5000) {
+    diamonds -= 5000;
+    miningSpeed += 2.0;
+    alert("Nâng cp thành công! Tc  mi: " + miningSpeed.toFixed(2));
+    updateDisplay();
+  } else {
+    alert("Không  kim cng!");
+  }
+};
+
+document.getElementById("withdrawAmount").oninput = function() {
+  let amt = parseInt(this.value) || 0;
+  document.getElementById("receiveVND").textContent = (amt * 0.0005).toLocaleString(undefined, {minimumFractionDigits:4, maximumFractionDigits:4});
+};
+
+function showTab(tabId) {
+  document.getElementById("mainScreen").style.display = tabId === 'mainScreen' ? 'flex' : 'none';
+  document.getElementById("withdrawScreen").style.display = tabId === 'withdrawScreen' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function submitWithdrawRequest() {
+  const type = document.getElementById("withdrawType").value;
+  const accNum = document.getElementById("accountNumber").value.trim();
+  const accName = document.getElementById("accountName").value.trim();
+  const amount = parseInt(document.getElementById("withdrawAmount").value) || 0;
+
+  if (!accNum || !accName || amount < 8000) {
+    alert("Vui lòng in y  thông tin và s vàng ti thiu 8,000!");
+    return;
+  }
+  if (amount > gold) {
+    alert("Không  vàng  rút!");
+    return;
+  }
+
+  const data = {
+    action: "withdraw_request",
+    user_id: tg.initDataUnsafe.user.id,
+    username: tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "unknown",
+    type: type,
+    account_number: accNum,
+    account_name: accName,
+    amount: amount
+  };
+
+  tg.sendData(JSON.stringify(data));
+  gold -= amount;
+  updateDisplay();
+
+  const hist = document.getElementById("withdrawHistory");
+  hist.innerHTML += `<p>${new Date().toLocaleString('vi-VN')} - ${amount.toLocaleString()} vàng  ${type.toUpperCase()} - Ch duyt</p>`;
+
+  alert("Yêu cu rút ã c gi n Admin!");
+}
+</script>
+</body>
+</html>
